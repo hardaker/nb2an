@@ -21,6 +21,7 @@ setuptools.setup(
             'nb-racks = nb2an.tools.getracks:main',
             'nb-outlets = nb2an.tools.getoutlets:main',
             'nb-networks = nb2an.tools.getnetworks:main',
+            'nb-update-ansible = nb2an.tools.update_ansible:main',
             'nb-check-ansible = nb2an.tools.checkansible:main',
         ]
     },
