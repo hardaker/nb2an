@@ -13,30 +13,44 @@ import ruamel.yaml
 import nb2an.netbox
 import nb2an.dotnest
 
+
 def parse_args():
-    parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter,
-                            description=__doc__,
-                            epilog="Exmaple Usage: update")
+    parser = ArgumentParser(
+        formatter_class=ArgumentDefaultsHelpFormatter,
+        description=__doc__,
+        epilog="Exmaple Usage: update",
+    )
 
-    parser.add_argument("-n", "--noop", action="store_true",
-                        help="Don't actually make changes")
+    parser.add_argument(
+        "-n", "--noop", action="store_true", help="Don't actually make changes"
+    )
 
-    parser.add_argument("--log-level", "--ll", default="info",
-                        help="Define the logging verbosity level (debug, info, warning, error, fotal, critical).")
+    parser.add_argument(
+        "--log-level",
+        "--ll",
+        default="info",
+        help="Define the logging verbosity level (debug, info, warning, error, fotal, critical).",
+    )
 
-    parser.add_argument("-r", "--racks", default=[], type=int, nargs="*",
-                        help="Racks to update")
+    parser.add_argument(
+        "-r", "--racks", default=[], type=int, nargs="*", help="Racks to update"
+    )
 
-    parser.add_argument("-d", "--ansible-directory",
-                        type=str, help="The ansible directory to verify")
+    parser.add_argument(
+        "-d", "--ansible-directory", type=str, help="The ansible directory to verify"
+    )
 
-    parser.add_argument("-c", "--changes-file", default=None, type=FileType("r"),
-                        help="The changes definition file to use")
+    parser.add_argument(
+        "-c",
+        "--changes-file",
+        default=None,
+        type=FileType("r"),
+        help="The changes definition file to use",
+    )
 
     args = parser.parse_args()
     log_level = args.log_level.upper()
-    logging.basicConfig(level=log_level,
-                        format="%(levelname)-10s:\t%(message)s")
+    logging.basicConfig(level=log_level, format="%(levelname)-10s:\t%(message)s")
     return args
 
 
@@ -52,8 +66,13 @@ def process_changes(changes, yaml_struct, nb_data):
             yaml_struct[item] = value
 
 
-def process_host(nb: nb2an.netbox.Netbox, hostname: str, yaml_file: str, outlets: list,
-                 changes: dict = None):
+def process_host(
+    nb: nb2an.netbox.Netbox,
+    hostname: str,
+    yaml_file: str,
+    outlets: list,
+    changes: dict = None,
+):
     info(f"modifying {yaml_file}")
 
     # load the original YAML
@@ -66,8 +85,6 @@ def process_host(nb: nb2an.netbox.Netbox, hostname: str, yaml_file: str, outlets
         yaml_struct = yaml_parser.load(yaml_data)
 
     if changes:
-        debug(changes)
-
         nb_data = nb.get_devices_by_name(hostname)
         if not nb_data or len(nb_data) != 1:
             info(f"not processing changes for {hostname} as no netbox data found")
@@ -77,7 +94,6 @@ def process_host(nb: nb2an.netbox.Netbox, hostname: str, yaml_file: str, outlets
 
         for item in changes:
             debug(f"setting: {item} to {changes[item]}")
-
 
     # write the YAML back out
     with open(yaml_file, "w") as modified:
@@ -97,7 +113,7 @@ def main():
         error("Failed to find ansible_directory in args or .nb2an config")
         exit(1)
 
-    devices = nb.get_devices(args.racks)
+    devices = nb.get_devices(args.racks, link_other_information=True)
     outlets = nb.get_outlets()
 
     changes = None
@@ -105,7 +121,7 @@ def main():
         changes = yaml.safe_load(args.changes_file.read())
 
     for device in devices:
-        name = nb.fqdn(device['name'])
+        name = nb.fqdn(device["name"])
         debug(f"starting: {name}")
 
         device_yaml = os.path.join(ansible_directory, "host_vars", name + ".yml")
