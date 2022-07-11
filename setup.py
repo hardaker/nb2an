@@ -29,5 +29,12 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
+    install_reqs=[
+        "rich",
+        "ansible",
+        "ruamel.yaml",
+        "requests",
+        "pyaml",
+    ],
     python_requires=">=3.6",
 )
