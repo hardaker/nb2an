@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="nb2an",
-    version="0.9",
+    version="0.9.1",
     author="Wes Hardaker",
     author_email="opensource@hardakers.net",
     description="A set of python scripts to compare or update NetBox and Ansible",
@@ -20,7 +20,7 @@ setuptools.setup(
             "nb-devices = nb2an.tools.getdevices:main",
             "nb-racks = nb2an.tools.getracks:main",
             "nb-outlets = nb2an.tools.getoutlets:main",
-            "nb-networks = nb2an.tools.getnetworks:main",
+            "nb-networks = nb2an.tools.getnetwork:main",
             "nb-update-ansible = nb2an.tools.update_ansible:main",
             #            'nb-check-ansible = nb2an.tools.checkansible:main',
         ]
