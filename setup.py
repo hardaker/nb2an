@@ -29,7 +29,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    install_reqs=[
+    install_requires=[
         "rich",
         "ansible",
         "ruamel.yaml",
