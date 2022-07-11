@@ -50,8 +50,11 @@ def main():
         except Exception:
             debug(f"trying by name: {device}")
             device = nb2an.netbox.Netbox().get_devices_by_name(device)
-        
-        print(yaml.dump(device))
+
+        for innerdevice in device: # could have returned more than one
+            print(f"#\n# device: #{innerdevice['id']}\n#")
+            print(yaml.dump(innerdevice))
+
 
 if __name__ == "__main__":
     main()
