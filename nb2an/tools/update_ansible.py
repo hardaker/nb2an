@@ -49,13 +49,12 @@ def process_changes(changes, yaml_struct, nb_data):
             process_changes(changes[item], yaml_struct[item], nb_data)
         elif isinstance(changes[item], str):
             value = dn.get(changes[item])
-            info(f"got here: {item} {value}")
             yaml_struct[item] = value
 
 
 def process_host(nb: nb2an.netbox.Netbox, hostname: str, yaml_file: str, outlets: list,
                  changes: dict = None):
-    debug(f"modifying {yaml_file}")
+    info(f"modifying {yaml_file}")
 
     # load the original YAML
     with open(yaml_file) as original:
@@ -71,7 +70,7 @@ def process_host(nb: nb2an.netbox.Netbox, hostname: str, yaml_file: str, outlets
 
         nb_data = nb.get_devices_by_name(hostname)
         if not nb_data or len(nb_data) != 1:
-            info("not processing changes for {hostname} as no netbox data found")
+            info(f"not processing changes for {hostname} as no netbox data found")
         else:
             nb_data = nb_data[0]
             process_changes(changes, yaml_struct, nb_data)
