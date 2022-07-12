@@ -6,6 +6,8 @@ configuration, often with duplicate information. Keeping them in sync
 can be a daunting challenge. The **nb2an** package provides utilities to
 map NetBox values to ansible *host_vars* using a simple mapping file.
 
+Read the [full documentation online](https://nb2an.readthedocs.io/en/latest/)
+
 # Installation
 
 You can use *pip* or *pipx* to install the nb2an tools:

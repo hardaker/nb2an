@@ -18,6 +18,7 @@ install:
 README.md: docs/index.rst docs/usage.rst Makefile
 	pandoc -i docs/index.rst -o docs/index.md
 	cat docs/index.md | perl -p -e 'if (/:::/) { exit }' > $@
+	echo -e "Read the [full documentation online](https://nb2an.readthedocs.io/en/latest/)\n" >> $@
 	pandoc -i docs/usage.rst -o docs/usage.md
 	cat docs/usage.md >> $@
 	rm -f docs/usage.md docs/index.md
