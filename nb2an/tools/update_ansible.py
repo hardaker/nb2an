@@ -41,6 +41,15 @@ def parse_args():
     )
 
     parser.add_argument(
+        "-D",
+        "--devices",
+        default=[],
+        type=str,
+        nargs="*",
+        help="Process only these NetBox device names",
+    )
+
+    parser.add_argument(
         "-c",
         "--changes-file",
         default=None,
@@ -61,9 +70,15 @@ def process_changes(changes, yaml_struct, nb_data):
             if item not in yaml_struct:
                 yaml_struct[item] = {}  # TODO: allow list creation
             process_changes(changes[item], yaml_struct[item], nb_data)
+            if yaml_struct[item] == {}:
+                # nothing added, drop it again
+                del yaml_struct[item]
         elif isinstance(changes[item], str):
-            value = dn.get(changes[item])
-            yaml_struct[item] = value
+            try:
+                value = dn.get(changes[item])
+                yaml_struct[item] = value
+            except Exception:
+                debug(f"skipping {changes[item]}: failed to find netbox value")
 
 
 def process_host(
@@ -85,7 +100,7 @@ def process_host(
         yaml_struct = yaml_parser.load(yaml_data)
 
     if changes:
-        nb_data = nb.get_devices_by_name(hostname)
+        nb_data = nb.get_devices_by_name(hostname, link_other_information=True)
         if not nb_data or len(nb_data) != 1:
             info(f"not processing changes for {hostname} as no netbox data found")
         else:
@@ -117,7 +132,7 @@ def main():
     outlets = nb.get_outlets()
 
     changes = None
-    if args.changes_file:
+    if not args.noop and args.changes_file:
         changes = yaml.safe_load(args.changes_file.read())
 
     for device in devices:
