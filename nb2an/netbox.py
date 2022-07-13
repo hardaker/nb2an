@@ -10,6 +10,8 @@ default_config_path = os.path.join(os.environ.get("HOME"), ".nb2an")
 
 
 class Netbox:
+    "An interface to Netbox to extract data needed for nb2an to function"
+
     def __init__(
         self,
         api_url=default_url,
@@ -89,7 +91,11 @@ class Netbox:
             results.append(the_devices)
         return results
 
-    def get_devices_by_name(self, devices: Union[list[str], str] = None):
+    def get_devices_by_name(
+        self,
+        devices: Union[list[str], str] = None,
+        link_other_information: bool = False,
+    ):
         if isinstance(devices, str):
             devices = [devices]
         if devices is None or devices == []:
@@ -98,14 +104,20 @@ class Netbox:
         results = []
         for device in devices:
             the_device = self.get("/dcim/devices/?name=" + str(device))
-            if not the_device and device.endswith(self.suffix):
-                device = device[0 : -len(self.prefix)]
+            if (not the_device or the_device["count"] == 0) and device.endswith(
+                self.suffix
+            ):
+                device = device[0 : -len(self.suffix)]
                 the_device = self.get("/dcim/devices/?name=" + str(device))
             elif not the_device:
                 device = self.fqdn(device)
                 the_device = self.get("/dcim/devices/?name=" + str(device))[0]
 
             results.extend(the_device["results"])
+
+        if link_other_information:
+            results = self.link_device_data(results)
+
         return results
 
     def get_outlets(self, device: int = None):
@@ -113,6 +125,14 @@ class Netbox:
             outlets = self.get("/dcim/power-outlets/?device_id=" + str(device))
         else:
             outlets = self.get("/dcim/power-outlets/")
+
+        return outlets["results"]
+
+    def get_power_ports(self, device: int = None):
+        if device:
+            outlets = self.get("/dcim/power-ports/?device_id=" + str(device))
+        else:
+            outlets = self.get("/dcim/power-ports/")
 
         return outlets["results"]
 
@@ -152,15 +172,32 @@ class Netbox:
         if "devices" not in self.data:
             self.data["devices"] = self.get_devices()
 
+        if "outlets" not in self.data:
+            self.data["outlets"] = self.get_outlets()
+
+        if "power_ports" not in self.data:
+            self.data["power_ports"] = self.get_power_ports()
+
     def link_device_data(self, devices=None) -> dict:
         self.bootstrap_all_data()
         if not devices:
             devices = self.data["devices"]
+
         for device in devices:
             if device["name"] in self.data["interfaces"]:
-                device["interfaces"] = self.data["interfaces"]
+                device["interfaces"] = self.data["interfaces"][device["name"]]
             if device["name"] in self.data["addresses"]:
-                device["addresses"] = self.data["addresses"]
+                device["addresses"] = self.data["addresses"][device["name"]]
+
+            device["power_ports"] = []
+            if device == "f1-lax.b.isi.edu":
+                import pdb
+
+                pdb.set_trace()
+            for port in self.data["power_ports"]:
+                if port["device"]["name"] in device["name"]:
+                    device["power_ports"].append(port)
+
         return devices
 
     def get_interfaces_by_device_name(self, device_name: str) -> dict:
