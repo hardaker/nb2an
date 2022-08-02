@@ -26,10 +26,6 @@ def parse_args():
     )
 
     parser.add_argument(
-        "-b", "--blanks", action="store_true", help="Show blank areas with blank lines"
-    )
-
-    parser.add_argument(
         "--log-level",
         "--ll",
         default="info",
