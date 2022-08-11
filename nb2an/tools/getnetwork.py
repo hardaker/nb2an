@@ -49,7 +49,7 @@ def main():
     interface_addresses = nb.get_addresses()
     interfaces = nb.get_interfaces()
 
-    for device in sorted(r["results"], key=lambda x: x["display"]):
+    for device in sorted(r, key=lambda x: x["display"]):
 
         name = device["display"]
         print(f"{name}:")

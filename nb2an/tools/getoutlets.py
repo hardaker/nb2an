@@ -47,10 +47,10 @@ def main():
 
     nb = nb2an.netbox.Netbox()
     r = nb.get("/dcim/devices/?rack_id=" + args.rack)
-    for device in r["results"]:
-        outlets = nb.get(f"/dcim/power-outlets/?device_id={device['id']}")
+    for device in r:
+        outlets = nb.get_outlets_by_device_id(device["id"])
         print(f"{device['display']}:")
-        for outlet in outlets["results"]:
+        for outlet in outlets:
             print(f"  - {outlet['display']}")
             by_outlet[outlet["display"]] = outlet["device"]["display"]
             by_device[outlet["device"]["display"]].append(outlet["display"])

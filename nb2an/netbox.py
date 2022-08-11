@@ -44,7 +44,7 @@ class Netbox:
             hostname = hostname + self.suffix
         return hostname
 
-    def get(self, url: str, use_cache: bool = True):
+    def get(self, url: str, use_cache: bool = True, strip_results: bool = True):
         if not url.startswith("http"):
             url = self.prefix + url
 
@@ -63,14 +63,17 @@ class Netbox:
         r.raise_for_status()
 
         # maybe cache them
+        encoded_results = r.json()
+        if strip_results:
+            encoded_results = encoded_results["results"]
         if use_cache:
-            self.url_cache[url] = r.json()
+            self.url_cache[url] = encoded_results
 
-        return r.json()
+        return encoded_results
 
     def get_racks(self):
         results = self.get("/dcim/racks")
-        return results["results"]
+        return results
 
     def get_devices(
         self,
@@ -85,7 +88,7 @@ class Netbox:
         devices = []
         for racknum in racknums:
             rack_devices = self.get("/dcim/devices/?rack_id=" + str(racknum))
-            devices.extend(rack_devices["results"])
+            devices.extend(rack_devices)
 
         if link_other_information:
             devices = self.link_device_data(devices)
@@ -105,7 +108,7 @@ class Netbox:
         # grab each device in turn
         results = []
         for device in devices:
-            the_devices = self.get("/dcim/devices/" + str(device))
+            the_devices = self.get("/dcim/devices/" + str(device), strip_results=False)
             results.append(the_devices)
 
         # link in other things
@@ -136,11 +139,32 @@ class Netbox:
                 device = self.fqdn(device)
                 the_device = self.get("/dcim/devices/?name=" + str(device))[0]
 
-            results.extend(the_device["results"])
+            results.extend(the_device)
 
         if link_other_information:
             results = self.link_device_data(results)
 
+        return results
+
+    # generic grabber for things attached to a device
+    def get_device_components_by_device_id(self, component: str, device_id: int):
+        self.bootstrap_all_data()
+        objects = self.data[component]
+
+        results = []
+        for obj in objects:
+            if obj["device"]["id"] == device_id:
+                results.append(obj)
+        return results
+
+    def get_device_components_by_device_name(self, component: str, device_name: int):
+        self.bootstrap_all_data()
+        objects = self.data[component]
+
+        results = []
+        for obj in objects:
+            if obj["device"]["name"] == device_name:
+                results.append(obj)
         return results
 
     # Outlets
@@ -152,11 +176,11 @@ class Netbox:
     def outlets(self):
         return self.get_outlets()
 
-    def get_outlet(self, device: int):
-        self.bootstrap_all_data()
-        for outlet in self.data["outlets"]:
-            if outlet["device"]["id"] == device:
-                return outlet
+    def get_outlets_by_device_id(self, device: int):
+        return self.get_device_components_by_device_id("outlets", device)
+
+    def get_outlets_by_device_name(self, device: str):
+        return self.get_device_components_by_device_name("outlets", device)
 
     # power ports
     def get_power_ports(self, device: int = None):
@@ -167,26 +191,18 @@ class Netbox:
     def power_ports(self):
         return self.get_power_ports()
 
-    def get_power_port(self, device: int):
-        self.bootstrap_all_data()
-        for power_port in self.data["power_ports"]:
-            if power_port["device"]["id"] == device:
-                return power_port
+    def get_power_ports_by_device_id(self, device: int):
+        return self.get_device_components_by_device_id("power_ports", device)
 
-    def get_power_ports(self, device: int = None):
-        if device:
-            outlets = self.get("/dcim/power-ports/?device_id=" + str(device))
-        else:
-            outlets = self.get("/dcim/power-ports/")
-
-        return outlets["results"]
+    def get_power_ports_by_device_name(self, device: str):
+        return self.get_device_components_by_device_name("power_ports", device)
 
     def get_addresses(self) -> dict:
         "Returns a nested dict of all registered hosts/interface/family = addresses"
         interface_addresses = collections.defaultdict(dict)
         for family in [4, 6]:
             r = self.get(f"/ipam/ip-addresses/?family={family}")
-            for addr in r["results"]:
+            for addr in r:
                 host = addr["assigned_object"]["device"]["display"]
                 endpoint = addr["assigned_object"]["name"]
                 if endpoint not in interface_addresses[host]:
@@ -201,7 +217,7 @@ class Netbox:
         r = self.get(f"/dcim/interfaces/")
 
         interfaces = collections.defaultdict(dict)
-        for interface in r["results"]:
+        for interface in r:
             device = interface["device"]["name"]
             interfaces[device][interface["display"]] = interface
 
@@ -218,8 +234,8 @@ class Netbox:
         if "devices" not in self.data:
             self.data["devices"] = self.get_devices()
 
-        if "outlets" not in self.data:
-            self.data["outlets"] = self.get_outlets()
+        self.data["outlets"] = self.get("/dcim/power-outlets/")
+        self.data["power_ports"] = self.get("/dcim/power-ports/")
 
         if "power_ports" not in self.data:
             self.data["power_ports"] = self.get_power_ports()
