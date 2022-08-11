@@ -153,8 +153,11 @@ class Netbox:
 
         results = []
         for obj in objects:
-            if obj["device"]["id"] == device_id:
-                results.append(obj)
+            try:
+                if obj["connected_endpoint"]["id"] == device_id:
+                    results.append(obj)
+            except Exception:
+                pass
         return results
 
     def get_device_components_by_device_name(self, component: str, device_name: int):
@@ -163,8 +166,11 @@ class Netbox:
 
         results = []
         for obj in objects:
-            if obj["device"]["name"] == device_name:
-                results.append(obj)
+            try:
+                if obj["connected_endpoint"]["name"] == device_name:
+                    results.append(obj)
+            except Exception:
+                pass
         return results
 
     # Outlets
