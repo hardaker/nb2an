@@ -91,16 +91,27 @@ class Netbox:
             devices = self.link_device_data(devices)
         return devices
 
-    def get_devices_by_id(self, devices: Union[list[int], int] = None):
+    def get_devices_by_id(
+        self,
+        devices: Union[list[int], int] = None,
+        link_other_information: bool = False,
+    ):
+        "Given a device ID, grab the device's info from the API"
         if isinstance(devices, int):
             devices = [devices]
         if devices is None or devices == []:
             devices = [x["id"] for x in self.get_devices()]
 
+        # grab each device in turn
         results = []
         for device in devices:
             the_devices = self.get("/dcim/devices/" + str(device))
             results.append(the_devices)
+
+        # link in other things
+        if link_other_information:
+            results = self.link_device_data(results)
+
         return results
 
     def get_devices_by_name(
