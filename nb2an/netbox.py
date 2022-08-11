@@ -26,6 +26,7 @@ class Netbox:
         self.prefix = self.config.get("api_url", api_url)
         self.suffix = self.config.get("suffix", suffix)
         self.ansible_dir = self.config.get("ansible_dir", ansible_dir)
+        self.url_cache = {}
 
         self.data = {}
 
@@ -43,17 +44,28 @@ class Netbox:
             hostname = hostname + self.suffix
         return hostname
 
-    def get(self, url: str):
+    def get(self, url: str, use_cache: bool = True):
         if not url.startswith("http"):
             url = self.prefix + url
+
+        if use_cache and url in self.url_cache:
+            debug(f"returning cached: {url}")
+            return self.url_cache[url]
         debug(f"fetching: {url}")
 
         c = self.config
         headers = {"Authorization": f"Token {c['token']}"}
         # auth=(c['user'], c['password']),
         # debug(f"headers: {headers}")
+
+        # get the contents
         r = requests.get(url, headers=headers)
         r.raise_for_status()
+
+        # maybe cache them
+        if use_cache:
+            self.url_cache[url] = r.json()
+
         return r.json()
 
     def get_racks(self):
