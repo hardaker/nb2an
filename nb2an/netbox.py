@@ -143,13 +143,35 @@ class Netbox:
 
         return results
 
-    def get_outlets(self, device: int = None):
-        if device:
-            outlets = self.get("/dcim/power-outlets/?device_id=" + str(device))
-        else:
-            outlets = self.get("/dcim/power-outlets/")
+    # Outlets
+    def get_outlets(self):
+        self.bootstrap_all_data()
+        return self.data["outlets"]
 
-        return outlets["results"]
+    @property
+    def outlets(self):
+        return self.get_outlets()
+
+    def get_outlet(self, device: int):
+        self.bootstrap_all_data()
+        for outlet in self.data["outlets"]:
+            if outlet["device"]["id"] == device:
+                return outlet
+
+    # power ports
+    def get_power_ports(self, device: int = None):
+        self.bootstrap_all_data()
+        return self.data["power_ports"]
+
+    @property
+    def power_ports(self):
+        return self.get_power_ports()
+
+    def get_power_port(self, device: int):
+        self.bootstrap_all_data()
+        for power_port in self.data["power_ports"]:
+            if power_port["device"]["id"] == device:
+                return power_port
 
     def get_power_ports(self, device: int = None):
         if device:
@@ -186,6 +208,7 @@ class Netbox:
         return interfaces
 
     def bootstrap_all_data(self) -> None:
+        "pre-fetch all netbox data"
         if "interfaces" not in self.data:
             self.data["interfaces"] = self.get_interfaces()
 
@@ -213,12 +236,8 @@ class Netbox:
                 device["addresses"] = self.data["addresses"][device["name"]]
 
             device["power_ports"] = []
-            if device == "f1-lax.b.isi.edu":
-                import pdb
-
-                pdb.set_trace()
             for port in self.data["power_ports"]:
-                if port["device"]["name"] in device["name"]:
+                if port["device"]["name"] == device["name"]:
                     device["power_ports"].append(port)
 
         return devices
