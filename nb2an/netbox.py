@@ -154,8 +154,9 @@ class Netbox:
         results = []
         for obj in objects:
             try:
-                if obj["connected_endpoint"]["id"] == device_id:
+                if obj["connected_endpoint"]["device"]["id"] == device_id:
                     results.append(obj)
+
             except Exception:
                 pass
         return results

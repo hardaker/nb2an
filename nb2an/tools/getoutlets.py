@@ -51,7 +51,7 @@ def main():
         outlets = nb.get_outlets_by_device_id(device["id"])
         print(f"{device['display']}:")
         for outlet in outlets:
-            print(f"  - {outlet['display']}")
+            print(f"  - {outlet['device']['display']}.{outlet['display']}")
             by_outlet[outlet["display"]] = outlet["device"]["display"]
             by_device[outlet["device"]["display"]].append(outlet["display"])
 
