@@ -8,6 +8,8 @@ import logging
 import sys
 import os
 import yaml
+import shutil
+import subprocess
 import ruamel.yaml
 
 import nb2an.netbox
@@ -57,6 +59,13 @@ def parse_args():
         help="The changes definition file to use",
     )
 
+    parser.add_argument(
+        "-w",
+        "--whitespace-hack",
+        action="store_true",
+        help="Try a multi-run with yaml-edit and whitespace ignoring diff to patch minimally",
+    )
+
     args = parser.parse_args()
     log_level = args.log_level.upper()
     logging.basicConfig(level=log_level, format="%(levelname)-10s:\t%(message)s")
@@ -85,7 +94,6 @@ def process_host(
     nb: nb2an.netbox.Netbox,
     hostname: str,
     yaml_file: str,
-    outlets: list,
     changes: dict = None,
 ):
     info(f"modifying {yaml_file}")
@@ -115,6 +123,18 @@ def process_host(
         yaml_parser.dump(yaml_struct, modified)
 
 
+def process_devices(nb, ansible_directory, racks=[], changes=True):
+    devices = nb.get_devices(racks, link_other_information=True)
+
+    for device in devices:
+        name = nb.fqdn(device["name"])
+        debug(f"starting: {name}")
+
+        device_yaml = os.path.join(ansible_directory, "host_vars", name + ".yml")
+        if os.path.exists(device_yaml):
+            process_host(nb, name, device_yaml, changes=changes)
+
+
 def main():
     args = parse_args()
     nb = nb2an.netbox.Netbox()
@@ -123,25 +143,30 @@ def main():
     ansible_directory = args.ansible_directory
     if not ansible_directory:
         ansible_directory = config.get("ansible_directory")
+    host_vars = os.path.join(ansible_directory, "host_vars")
 
     if not ansible_directory:
         error("Failed to find ansible_directory in args or .nb2an config")
         exit(1)
 
-    devices = nb.get_devices(args.racks, link_other_information=True)
-    outlets = nb.get_outlets()
-
     changes = None
     if not args.noop and args.changes_file:
         changes = yaml.safe_load(args.changes_file.read())
 
-    for device in devices:
-        name = nb.fqdn(device["name"])
-        debug(f"starting: {name}")
+    # maybe copy the info to a separate set of files
+    if args.whitespace_hack:
+        shutil.copytree(host_vars, host_vars + ".nb2an-bkup")
 
-        device_yaml = os.path.join(ansible_directory, "host_vars", name + ".yml")
-        if os.path.exists(device_yaml):
-            process_host(nb, name, device_yaml, outlets, changes=changes)
+    process_devices(nb, ansible_directory, racks=args.racks, changes=changes)
+
+    # put the original back
+    if args.whitespace_hack:
+        # move the original data back
+        os.rename(host_vars, host_vars + ".nb2an-modified")
+        os.rename(host_vars + ".nb2an-bkup", host_vars)
+
+        # generate a patch
+        subprocess.run(["diff", "-wu", host_vars, host_vars + ".nb2an-modified"])
 
 
 if __name__ == "__main__":
