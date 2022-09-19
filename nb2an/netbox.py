@@ -4,6 +4,7 @@ import requests
 import collections
 from typing import Union
 from logging import debug
+from rich import print
 
 default_url = "https://netbox/api"
 default_config_path = os.path.join(os.environ.get("HOME"), ".nb2an")
@@ -27,6 +28,8 @@ class Netbox:
         self.suffix = self.config.get("suffix", suffix)
         self.ansible_dir = self.config.get("ansible_dir", ansible_dir)
         self.url_cache = {}
+        self.devices_by_id = {}
+        self.devices_by_name = {}
 
         self.data = {}
 
@@ -44,7 +47,30 @@ class Netbox:
             hostname = hostname + self.suffix
         return hostname
 
+    def shortname_name(self, hostname):
+        if hostname.endswith(self.suffix):
+            return hostname[0 : -len(self.suffix)]
+        return hostname
+
+    def get_cached_device_by_name(self, hostname):
+        # try whatever they passed
+        if hostname in self.devices_by_name:
+            return self.devices_by_name[hostname]
+
+        # try shorter
+        shorter = self.shortname_name(hostname)
+        if shorter in self.devices_by_name:
+            return self.devices_by_name[shorter]
+
+        # try longer
+        fqdn = self.fqdn(hostname)
+        if fqdn in self.devices_by_name:
+            return self.devices_by_name[fqdn]
+
+        return None  # whoops
+
     def get(self, url: str, use_cache: bool = True, strip_results: bool = True):
+        "fetch data from a URL, and potentially cache the results"
         if not url.startswith("http"):
             url = self.prefix + url
 
@@ -102,12 +128,19 @@ class Netbox:
         "Given a device ID, grab the device's info from the API"
         if isinstance(devices, int):
             devices = [devices]
+
+        # assume we want all devices
         if devices is None or devices == []:
             devices = [x["id"] for x in self.get_devices()]
 
         # grab each device in turn
         results = []
         for device in devices:
+            debug(f"looking for device {device} by id")
+            if device in self.devices_by_id:
+                results.append(self.devices_by_id[device])
+                continue
+
             the_devices = self.get("/dcim/devices/" + str(device), strip_results=False)
             results.append(the_devices)
 
@@ -124,22 +157,34 @@ class Netbox:
     ):
         if isinstance(devices, str):
             devices = [devices]
+
+        # assume we want all devices
         if devices is None or devices == []:
             devices = [x["id"] for x in self.get_devices()]
 
         results = []
         for device in devices:
+            debug(f"LOOKING for device {device} by name")
+            cached = self.get_cached_device_by_name(device)
+            if cached:
+                results.append(cached)
+                continue
             the_device = self.get("/dcim/devices/?name=" + str(device))
-            if (not the_device or the_device["count"] == 0) and device.endswith(
+            if (not the_device or len(the_device) != 1) and device.endswith(
                 self.suffix
             ):
+                # retry without a FQDN suffix
                 device = device[0 : -len(self.suffix)]
-                the_device = self.get("/dcim/devices/?name=" + str(device))
+                the_device = self.get("/dcim/devices/?name=" + str(device))[0]
             elif not the_device:
+                # retry WITH a FQDN
                 device = self.fqdn(device)
                 the_device = self.get("/dcim/devices/?name=" + str(device))[0]
+            else:
+                the_device = the_device[0]
 
-            results.extend(the_device)
+            if the_device:
+                results.append(the_device)
 
         if link_other_information:
             results = self.link_device_data(results)
@@ -262,6 +307,9 @@ class Netbox:
             for port in self.data["power_ports"]:
                 if port["device"]["name"] == device["name"]:
                     device["power_ports"].append(port)
+
+            self.devices_by_id[device["id"]] = device
+            self.devices_by_name[device["name"]] = device
 
         return devices
 
