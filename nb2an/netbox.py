@@ -164,7 +164,7 @@ class Netbox:
 
         results = []
         for device in devices:
-            debug(f"LOOKING for device {device} by name")
+            debug(f"looking for device {device} by name")
             cached = self.get_cached_device_by_name(device)
             if cached:
                 results.append(cached)
