@@ -7,6 +7,7 @@ from logging import debug, info, warning, error, critical
 import logging
 import sys
 import os
+import re
 import yaml
 import shutil
 import subprocess
@@ -15,6 +16,31 @@ import ruamel.yaml
 import nb2an.netbox
 import nb2an.dotnest
 
+FUNCTION_KEY = "__function"
+
+def fn_replace(dn, definition: dict):
+    "A function to do internal string replacements"
+    if not keys_present(definition, ['value', 'search', 'replacement']):
+        return
+    value = dn.get(definition['value'])
+    search = definition['search']
+    replacement = definition['replacement']
+    newvalue = re.sub(search, replacement, value,
+                      count=definition.get('count', 0))
+    return newvalue
+
+
+functions = {
+    'replace': fn_replace,
+}
+
+
+def keys_present(definition: dict, keys: list[str]):
+    for key in keys:
+        if key not in definition:
+            error(f"Failed to find key '{key}' in {definition}")
+            return False
+    return True
 
 def parse_args():
     parser = ArgumentParser(
@@ -76,6 +102,22 @@ def process_changes(changes, yaml_struct, nb_data):
     dn = nb2an.dotnest.DotNest(nb_data)
     for item in changes:
         if isinstance(changes[item], dict):
+
+            # check if it's a special dict with instructions
+            if FUNCTION_KEY in changes[item]:
+                function_name = changes[item][FUNCTION_KEY]
+                if function_name not in functions:
+                    error(f"function '{function_name}' is unknown")
+                    exit(1)
+
+                try:
+                    fn = functions[function_name]
+                    value = fn(dn, changes[item])
+                    yaml_struct[item] = value
+                    continue
+                except Exception:
+                    debug(f"failed to call function {function_name}")
+
             if item not in yaml_struct:
                 yaml_struct[item] = {}  # TODO: allow list creation
             process_changes(changes[item], yaml_struct[item], nb_data)
