@@ -147,6 +147,7 @@ def process_host(
         yaml_parser = ruamel.yaml.YAML()
         yaml_parser.indent(mapping=2, sequence=4, offset=2)
         yaml_parser.preserve_quotes = True
+        yaml_parser.width = 4096
         yaml_struct = yaml_parser.load(yaml_data)
 
     if changes:
