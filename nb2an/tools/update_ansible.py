@@ -15,32 +15,10 @@ import ruamel.yaml
 
 import nb2an.netbox
 import nb2an.dotnest
+from nb2an.plugins.update_ansible import update_ansible_plugins
 
-FUNCTION_KEY = "__function"
+PLUGIN_KEY = "__function"
 
-def fn_replace(dn, definition: dict):
-    "A function to do internal string replacements"
-    if not keys_present(definition, ['value', 'search', 'replacement']):
-        return
-    value = dn.get(definition['value'])
-    search = definition['search']
-    replacement = definition['replacement']
-    newvalue = re.sub(search, replacement, value,
-                      count=definition.get('count', 0))
-    return newvalue
-
-
-functions = {
-    'replace': fn_replace,
-}
-
-
-def keys_present(definition: dict, keys: list[str]):
-    for key in keys:
-        if key not in definition:
-            error(f"Failed to find key '{key}' in {definition}")
-            return False
-    return True
 
 def parse_args():
     parser = ArgumentParser(
@@ -104,14 +82,14 @@ def process_changes(changes, yaml_struct, nb_data):
         if isinstance(changes[item], dict):
 
             # check if it's a special dict with instructions
-            if FUNCTION_KEY in changes[item]:
-                function_name = changes[item][FUNCTION_KEY]
-                if function_name not in functions:
+            if PLUGIN_KEY in changes[item]:
+                function_name = changes[item][PLUGIN_KEY]
+                if function_name not in update_ansible_plugins:
                     error(f"function '{function_name}' is unknown")
                     exit(1)
 
                 try:
-                    fn = functions[function_name]
+                    fn = update_ansible_plugins[function_name]
                     value = fn(dn, changes[item])
                     yaml_struct[item] = value
                     continue
