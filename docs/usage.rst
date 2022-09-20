@@ -36,6 +36,14 @@ Note that some of these can be overridden with command line options.
    # nb2an can modify the host files inside host_vars after this path
    ansible_directory: /home/user/ansible
 
+If you require HTTP's basic-auth, you can also add a *user* and
+*password* configuration as well:
+
+.. code-block:: yaml
+
+   user: foo
+   password: 'barily a password'
+
 Step 2: create a YAML mapping file
 ----------------------------------
 
