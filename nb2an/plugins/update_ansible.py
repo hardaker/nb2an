@@ -27,8 +27,8 @@ def keys_present(definition: dict, keys: list[str]):
 
 
 @plugin
-def fn_replace(dn, definition: dict):
-    "A function to do internal string replacements"
+def fn_replace(dn, yaml_struct, definition, item):
+    "A function to do internal string replacements before setting a value"
     if not keys_present(definition, ['value', 'search', 'replacement']):
         return
     value = dn.get(definition['value'])
@@ -36,7 +36,14 @@ def fn_replace(dn, definition: dict):
     replacement = definition['replacement']
     newvalue = re.sub(search, replacement, value,
                       count=definition.get('count', 0))
-    return newvalue
+    yaml_struct[item] = newvalue
+
+
+@plugin
+def fn_delete(dn, yaml_struct, definition, item):
+    "A plugin to remove a node"
+    if item in yaml_struct:
+        del yaml_struct[item]
 
 
 debug(f"plugins registered: {update_ansible_plugins}")

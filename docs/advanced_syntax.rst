@@ -38,3 +38,14 @@ portion of the URL:
         search: /api
         replacement: ''
 
+delete
+------
+
+Allows the deletion of a section of host_vars YAML that should no
+longer be present.  For example:
+
+.. code-block:: yaml
+
+    netbox_info:
+      old_subkey_name:
+        __function: delete

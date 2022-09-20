@@ -90,17 +90,17 @@ def process_changes(changes, yaml_struct, nb_data):
 
                 try:
                     fn = update_ansible_plugins[function_name]
-                    value = fn(dn, changes[item])
-                    yaml_struct[item] = value
-                    continue
+                    value = fn(dn, yaml_struct, changes[item], item)
                 except Exception:
                     debug(f"failed to call function {function_name}")
+            else:
+                if item not in yaml_struct:
+                    yaml_struct[item] = {}  # TODO: allow list creation
+                process_changes(changes[item], yaml_struct[item], nb_data)
 
-            if item not in yaml_struct:
-                yaml_struct[item] = {}  # TODO: allow list creation
-            process_changes(changes[item], yaml_struct[item], nb_data)
-            if yaml_struct[item] == {}:
-                # nothing added, drop it again
+
+            # if nothing was added, drop it again
+            if item in yaml_struct and yaml_struct[item] == {}:
                 del yaml_struct[item]
         elif isinstance(changes[item], str):
             try:
