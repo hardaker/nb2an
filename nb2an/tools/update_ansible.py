@@ -209,7 +209,7 @@ def main():
         os.rename(host_vars + ".nb2an-bkup", host_vars)
 
         # generate a patch
-        subprocess.run(["diff", "-wBu", host_vars, host_vars + ".nb2an-modified"])
+        subprocess.run(["diff", "-wBuZE", host_vars, host_vars + ".nb2an-modified"])
 
 
 if __name__ == "__main__":
