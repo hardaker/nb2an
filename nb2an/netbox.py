@@ -81,11 +81,14 @@ class Netbox:
 
         c = self.config
         headers = {"Authorization": f"Token {c['token']}"}
-        # auth=(c['user'], c['password']),
+        auth = None
+        if 'user' in c and 'password' in c:
+            auth = (c['user'], c['password'])
+
         # debug(f"headers: {headers}")
 
         # get the contents
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=headers, auth=auth)
         r.raise_for_status()
 
         # maybe cache them
