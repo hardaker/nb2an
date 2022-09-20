@@ -111,13 +111,15 @@ class Netbox:
     ):
         if isinstance(racknums, int):
             racknums = [racknums]
-        if racknums is None or racknums == []:
-            racknums = [x["id"] for x in self.get_racks()]
 
         devices = []
-        for racknum in racknums:
-            rack_devices = self.get("/dcim/devices/?rack_id=" + str(racknum))
-            devices.extend(rack_devices)
+        if racknums:
+            for racknum in racknums:
+                rack_devices = self.get("/dcim/devices/?rack_id=" + str(racknum))
+                devices.extend(rack_devices)
+        else:
+            all_devices = self.get("/dcim/devices/")
+            devices.extend(all_devices)
 
         if link_other_information:
             devices = self.link_device_data(devices)
