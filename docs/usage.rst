@@ -15,7 +15,7 @@ Updating your ansible data from netbox requires the following steps.
 Step 1: Create a nb2an configuration file
 -----------------------------------------
 
-*nb2an* tools take a YAML-based master configuration file containing
+The *nb2an* tools take a YAML-based master configuration file containing
 your netbox API token (which you’ll need to get from your NetBox
 instance). In this configuration file you can set a number of variables.
 Note that some of these can be overridden with command line options.
@@ -32,13 +32,14 @@ Note that some of these can be overridden with command line options.
    # (nb2an tools will check NetBox for simple and full names)
    suffix: .example.com
 
-   # where th eroot of your ansible code is stored
+   # where the root of your ansible code is stored
+   # nb2an can modify the host files inside host_vars after this path
    ansible_directory: /home/user/ansible
 
 Step 2: create a YAML mapping file
 ----------------------------------
 
-The *nb-update-ansible* tool is designed to only update variables within
+The `nb-update-ansible` tool is designed to only update variables within
 your ansible host_vars that you ask it to, leaving everything else
 (including comments) the same. Note that formatting is overwritten by
 default, but see below for how to make a patch instead (actually TBD).
@@ -47,7 +48,7 @@ The YAML file consists of a host_vars YAML structure that you’d like to
 have updated. Currently this supports only dictionaries, but array
 support is coming shortly. The value of each variable should be a dotted
 notation of where to pull the information from in the netbox data for a
-given device. See the *nb-device* tool below for how to get a dump of a
+given device. See the :ref:`nb_device` tool below for how to get a dump of a
 device for easier reading.
 
 Here’s an example mapping file, that updates or creates information in a
@@ -65,6 +66,9 @@ Here’s an example mapping file, that updates or creates information in a
        id: id
        site_url: site.url
 
+See the :ref:`advanced syntax` section for additional configuration
+capabilities, such as for value modification via the `replace` function.
+
 Step 3: Run *nb-update-ansible*
 -------------------------------
 
@@ -79,9 +83,9 @@ changes you have to your files in *host_vars* before running this tool.
    $ cd /home/user/ansible/host_vars
 
    $ git diff
-   diff --git a/host_vars/f1-lab.example.com.yml b/host_vars/f1-lab.example.com.yml
-   --- a/host_vars/f1-lab.example.com.yml
-   +++ b/host_vars/f1-lab.example.com.yml
+   diff --git a/host_vars/f1-lab.example.com.yml b/host_vars/firewall.example.com.yml
+   --- a/host_vars/firewall.example.com.yml
+   +++ b/host_vars/firewall.example.com.yml
    +host_info:
    +  serial_number: 00112233
    +  site: MIA
@@ -102,7 +106,7 @@ Note about YAML formatting changes
 yaml rewriter. Although it leaves comments in place, white-space changes
 will occur. You have two options to handle this:
 
-1. Allow the formatter (python’s *ruamel.yaml*) to rewrite the YAML
+1. Allow the formatter (python’s *ruamel.yaml* module) to rewrite the YAML
    files, as use their formatter as style convention (similar to how
    much of the planet is shifting to
    `black <https://pypi.org/project/black/>`__ for formatting python
@@ -111,22 +115,25 @@ will occur. You have two options to handle this:
    Then check that in and make a second pass with a real mapping file in
    order to see what changes are actually made.
 
-2. Generate a diff from *np-update-ansible -n mapping.yml* and
-   *np-update-ansible mapping.yml* and use the diff to view and apply
-   changes. The recursive diff won’t reformat much of the rest of the
-   file because it’ll only consist of changes *only* made by
-   *np-update-ansible*.
+2. Use `np-update-ansible` with its *-w* flag, which will make
+   multiple passes and generate a white-space ignoring diff of your
+   *host_vars* directory.  This will result it a patch that you can
+   applie that will reduce the number of rewritten lines down to a
+   much more restricted subset.  Essentially, the this diff won’t
+   reformat much of the rest of the files because it’ll only consist
+   of changes *only* made by *np-update-ansible*.
 
-   TODO: auto version of this coming…
 
-Data access with the nb-\* tools
-================================
+NetBox data access with the CLI using the nb-\* tools
+=====================================================
 
 The *nb2an* package contains a number of tools to access NetBox
 configuration from within a shell.
 
-nb-racks: Display the racks from NetBox
----------------------------------------
+.. _nb_racks:
+
+`nb-racks`: Display the racks from NetBox
+-----------------------------------------
 
 Many later tools taken an option netbox rack number to evaluate. This
 tools gives you a numbered list of all your racks.
@@ -139,8 +146,10 @@ tools gives you a numbered list of all your racks.
    2   Rack2                     AMS                  DC2 Room 1           10
    3   Rack3                     MIA                  DC9 Room Q            6
 
-nb-devices: List the devices from Netbox
-----------------------------------------
+.. _nb_devices:
+
+`nb-devices`: List the devices from Netbox
+------------------------------------------
 
 This tools lets all of the devices found in a rack, or if no rack number
 is specified, will list all the devices in NetBox. Devices will be
@@ -158,13 +167,15 @@ listed when *-b* is specified.
    44  36  database                  cpu2817
    45  35  backend2                  cpu2817
 
-nb-device:
-----------
+.. _nb_device:
 
-*nb-device* dumps the details of a particular device, given its *Id*
-which can be found from the first column of *nb-devices*. This
+`nb-device`:
+------------
+
+`nb-device` dumps the details of a particular device, given its *Id*
+which can be found from the first column of `nb-devices`. This
 information will be critical when building a mapping file to be passed
-to *np-update-ansible*. The output is a YAML structured array.
+to `np-update-ansible`. The output is a YAML structured array.
 
 ::
 
@@ -181,19 +192,19 @@ to *np-update-ansible*. The output is a YAML structured array.
        id: 2
    ...
 
-nb-outlets:
------------
+`nb-outlets`:
+-------------
 
 Displays the outlets used in the rack by devices. This is unfinished
 (works but will change)
 
-nb-networks:
-------------
+`nb-networks`:
+--------------
 
 Displays networks used in the rack by devices. This is unfinished (works
 but will change)
 
-nb-check-ansible:
------------------
+`nb-check-ansible`:
+-------------------
 
 TBD
