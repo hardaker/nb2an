@@ -7,6 +7,8 @@ You can use *pip* or *pipx* to install the nb2an tools:
 
    pipx install nb2an
 
+.. _usage:
+_
 Usage
 =====
 
@@ -76,6 +78,8 @@ Here’s an example mapping file, that updates or creates information in a
 
 See the :ref:`advanced syntax` section for additional configuration
 capabilities, such as for value modification via the `replace` function.
+
+.. _np-update-ansible:
 
 Step 3: Run *nb-update-ansible*
 -------------------------------
