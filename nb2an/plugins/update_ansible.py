@@ -46,4 +46,26 @@ def fn_delete(dn, yaml_struct, definition, item):
         del yaml_struct[item]
 
 
+@plugin
+def fn_foreach_create_dict(dn, yaml_struct, definition, item):
+    "iterates over a definition and applies it multiple times per array"
+    if not keys_present(definition, ['structure', 'array', 'keyname']):
+        return
+
+    # clear the existing content
+    yaml_struct[item] = {}
+
+    # for each item from the netbox array, create a structure
+    array_name = definition['array']
+    array = dn.get(definition['array'])
+    starting_structure = definition['structure']
+    for n, substructure in enumerate(array):
+        replacement = {}
+        keyvalue = dn.get(f"{array_name}.{n}.{definition['keyname']}")
+        for subitem in starting_structure:
+            path = f"{array_name}.{n}.{starting_structure[subitem]}"
+            value = dn.get(path)
+            replacement[subitem] = value
+        yaml_struct[item][keyvalue] = replacement
+
 debug(f"plugins registered: {update_ansible_plugins}")
