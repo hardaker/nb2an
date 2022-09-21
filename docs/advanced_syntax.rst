@@ -97,19 +97,6 @@ structure might look like this:
 .. code-block:: yaml
 
     power:
-      __function: foreach_create_dict
-      array: power_ports
-      keyname: display
-      structure:
-        pdu: connected_endpoint.device.display
-        outlet: connected_endpoint.display
-
-This could produce a host_vars YAML definition containing a structure
-like this:
-
-.. code-block:: yaml
-
-    power:
       left:
         pdu: RP1
         outlet: PO-1
