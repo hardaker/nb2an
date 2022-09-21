@@ -48,7 +48,16 @@ def fn_delete(dn, yaml_struct, definition, item):
 
 @plugin
 def fn_foreach_create_dict(dn, yaml_struct, definition, item):
-    "iterates over a definition and applies it multiple times per array"
+    "iterates over a definition and applies it multiple times per array, replacing the contents of the original structure"
+    # clear the existing content
+    yaml_struct[item] = {}
+
+    fn_foreach_augment_dict(dn, yaml_struct, definition, item)
+
+
+@plugin
+def fn_foreach_augment_dict(dn, yaml_struct, definition, item):
+    "iterates over a definition and applies it multiple times per array, augmenting an existing structure."
     if not keys_present(definition, ['structure', 'array', 'keyname']):
         return
 
@@ -68,4 +77,3 @@ def fn_foreach_create_dict(dn, yaml_struct, definition, item):
             replacement[subitem] = value
         yaml_struct[item][keyvalue] = replacement
 
-debug(f"plugins registered: {update_ansible_plugins}")

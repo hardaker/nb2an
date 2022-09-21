@@ -56,8 +56,13 @@ foreach_create_dict
 
 This allows you to build more complex dictionary structures within the
 host_vars YAML based on a list from netbox.  This is most useful when
-you wish to loop over *power_ports* or *interfaces* for example.  The
-following fields are needed as function arguments:
+you wish to loop over *power_ports* or *interfaces* for example.
+
+**Important:** this will replace all existing structure elements.  Use
+`foreach_augment_dict` if you want to leave existing elements that
+don't exist in netbox.
+
+The following fields are needed as function arguments:
 
 *keyname*
   The dictionary created will use this field for each key created in
@@ -111,3 +116,10 @@ like this:
       right:
         pdu: RP2
         outlet: PO-2
+
+foreach_augment_dict
+--------------------
+
+This is identical to foreach_create_dict, but leaves any existing
+elements in the YAML structure that existed before hand.  Any
+duplicated keys, however, will be replaced.
