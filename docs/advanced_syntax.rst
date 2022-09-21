@@ -3,14 +3,17 @@
 Advanced Syntax
 ===============
 
-The YAML replacement syntax allows for functions to be called at
-points in the tree.  The current functions are described below, with
+The YAML replacement syntax of `np-update-ansible`, as described in
+:ref:`usage`, allows for functions to be called at points
+in the tree.  The current functions are described below, with
 examples.
 
 The function to be called is indicated by having a dictionary
 structure in the YAML file with a special `__function` keyword.  When
 `nb2an` discovers this keyword, the remaining specification is passed
 to the function in question.
+
+.. _replace:
 
 replace
 -------
@@ -38,6 +41,8 @@ portion of the URL:
         search: /api
         replacement: ''
 
+.. _delete:
+
 delete
 ------
 
@@ -51,6 +56,8 @@ longer be present.  For example:
         __function: delete
 
         
+.. _foreach_create_dict:
+
 foreach_create_dict
 -------------------
 
@@ -59,7 +66,7 @@ host_vars YAML based on a list from netbox.  This is most useful when
 you wish to loop over *power_ports* or *interfaces* for example.
 
 **Important:** this will replace all existing structure elements.  Use
-`foreach_augment_dict` if you want to leave existing elements that
+:ref:`foreach_augment_dict` if you want to leave existing elements that
 don't exist in netbox.
 
 The following fields are needed as function arguments:
@@ -104,9 +111,11 @@ structure might look like this:
         pdu: RP2
         outlet: PO-2
 
+.. _foreach_augment_dict:
+
 foreach_augment_dict
 --------------------
 
-This is identical to foreach_create_dict, but leaves any existing
+This is identical to :ref:`foreach_create_dict`, but leaves any existing
 elements in the YAML structure that existed before hand.  Any
 duplicated keys, however, will be replaced.
