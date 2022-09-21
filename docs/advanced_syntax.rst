@@ -49,3 +49,65 @@ longer be present.  For example:
     netbox_info:
       old_subkey_name:
         __function: delete
+
+        
+foreach_create_dict
+-------------------
+
+This allows you to build more complex dictionary structures within the
+host_vars YAML based on a list from netbox.  This is most useful when
+you wish to loop over *power_ports* or *interfaces* for example.  The
+following fields are needed as function arguments:
+
+*keyname*
+  The dictionary created will use this field for each key created in
+  the dictionary.
+
+*array*
+  The element list from netbox to be iterated over.  It must be a list
+  of items.
+
+*structure*
+  In the definition, a *structure* element must be present that will be
+  used for each iteration in a list.  This is functionally a template
+  to be inserted at each key element.
+
+As an example, consider the following `nb2an.yml` structure:
+
+.. code-block:: yaml
+
+    power:
+      __function: foreach_create_dict
+      array: power_ports
+      keyname: display
+      structure:
+        pdu: connected_endpoint.device.display
+        outlet: connected_endpoint.display
+
+With this in place, if you have two power ports defined in netbox for
+a device, it would create entries under a common *power* node with
+each one based on the power port's display name.  The resulting
+structure might look like this:
+
+.. code-block:: yaml
+
+    power:
+      __function: foreach_create_dict
+      array: power_ports
+      keyname: display
+      structure:
+        pdu: connected_endpoint.device.display
+        outlet: connected_endpoint.display
+
+This could produce a host_vars YAML definition containing a structure
+like this:
+
+.. code-block:: yaml
+
+    power:
+      left:
+        pdu: RP1
+        outlet: PO-1
+      right:
+        pdu: RP2
+        outlet: PO-2
