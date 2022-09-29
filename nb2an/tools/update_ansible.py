@@ -7,6 +7,7 @@ from logging import debug, info, warning, error, critical
 import logging
 import sys
 import os
+import re
 import yaml
 import shutil
 import subprocess
@@ -14,6 +15,9 @@ import ruamel.yaml
 
 import nb2an.netbox
 import nb2an.dotnest
+from nb2an.plugins.update_ansible import update_ansible_plugins
+
+PLUGIN_KEY = "__function"
 
 
 def parse_args():
@@ -76,11 +80,27 @@ def process_changes(changes, yaml_struct, nb_data):
     dn = nb2an.dotnest.DotNest(nb_data)
     for item in changes:
         if isinstance(changes[item], dict):
-            if item not in yaml_struct:
-                yaml_struct[item] = {}  # TODO: allow list creation
-            process_changes(changes[item], yaml_struct[item], nb_data)
-            if yaml_struct[item] == {}:
-                # nothing added, drop it again
+
+            # check if it's a special dict with instructions
+            if PLUGIN_KEY in changes[item]:
+                function_name = changes[item][PLUGIN_KEY]
+                if function_name not in update_ansible_plugins:
+                    error(f"function '{function_name}' is unknown")
+                    exit(1)
+
+                try:
+                    fn = update_ansible_plugins[function_name]
+                    value = fn(dn, yaml_struct, changes[item], item)
+                except Exception:
+                    debug(f"failed to call function {function_name}")
+            else:
+                if item not in yaml_struct:
+                    yaml_struct[item] = {}  # TODO: allow list creation
+                process_changes(changes[item], yaml_struct[item], nb_data)
+
+
+            # if nothing was added, drop it again
+            if item in yaml_struct and yaml_struct[item] == {}:
                 del yaml_struct[item]
         elif isinstance(changes[item], str):
             try:
@@ -105,6 +125,7 @@ def process_host(
         yaml_parser = ruamel.yaml.YAML()
         yaml_parser.indent(mapping=2, sequence=4, offset=2)
         yaml_parser.preserve_quotes = True
+        yaml_parser.width = 4096
         yaml_struct = yaml_parser.load(yaml_data)
 
     if changes:
@@ -166,7 +187,7 @@ def main():
         os.rename(host_vars + ".nb2an-bkup", host_vars)
 
         # generate a patch
-        subprocess.run(["diff", "-wBu", host_vars, host_vars + ".nb2an-modified"])
+        subprocess.run(["diff", "-wBuZE", host_vars, host_vars + ".nb2an-modified"])
 
 
 if __name__ == "__main__":

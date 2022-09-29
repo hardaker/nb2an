@@ -17,6 +17,8 @@ map NetBox values to ansible *host_vars* using a simple mapping file.
    :caption: nb2an documentation:
 
    usage
+   tools
+   advanced_syntax
 
 Indices and tables
 ==================
