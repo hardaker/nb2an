@@ -3,7 +3,7 @@ import yaml
 import requests
 import collections
 from typing import Union
-from logging import debug
+from logging import debug, error
 from rich import print
 
 default_url = "https://netbox/api"
@@ -24,6 +24,9 @@ class Netbox:
         self.config = {}
         if os.path.exists(self.config_path):
             self.config = self.get_config()
+        else:
+            error(f"you must create a {self.config} configuration file first")
+            exit(1)
         self.prefix = self.config.get("api_url", api_url)
         self.suffix = self.config.get("suffix", suffix)
         self.ansible_dir = self.config.get("ansible_dir", ansible_dir)
@@ -82,8 +85,8 @@ class Netbox:
         c = self.config
         headers = {"Authorization": f"Token {c['token']}"}
         auth = None
-        if 'user' in c and 'password' in c:
-            auth = (c['user'], c['password'])
+        if "user" in c and "password" in c:
+            auth = (c["user"], c["password"])
 
         # debug(f"headers: {headers}")
 
