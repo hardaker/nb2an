@@ -21,6 +21,7 @@ The *nb2an* tools take a YAML-based master configuration file containing
 your netbox API token (which you’ll need to get from your NetBox
 instance). In this configuration file you can set a number of variables.
 Note that some of these can be overridden with command line options.
+Put this configuration in `${HOME}/.nb2an`:
 
 .. code-block:: yaml
 
@@ -134,5 +135,3 @@ will occur. You have two options to handle this:
    much more restricted subset.  Essentially, the this diff won’t
    reformat much of the rest of the files because it’ll only consist
    of changes *only* made by *np-update-ansible*.
-
-
