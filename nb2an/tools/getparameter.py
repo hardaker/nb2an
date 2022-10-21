@@ -35,6 +35,9 @@ def parse_args():
         "-r", "--racks", default=[], type=int, nargs="*", help="Racks to show"
     )
 
+    parser.add_argument("-f", "--fsdb", action="store_true",
+                        help="Output data in FSDB format")
+
     parser.add_argument(
         "-D",
         "--devices",
@@ -52,81 +55,30 @@ def parse_args():
     logging.basicConfig(level=log_level, format="%(levelname)-10s:\t%(message)s")
     return args
 
-
-def process_changes(changes, yaml_struct, nb_data):
-    dn = nb2an.dotnest.DotNest(nb_data)
-    for item in changes:
-        if isinstance(changes[item], dict):
-
-            # check if it's a special dict with instructions
-            if PLUGIN_KEY in changes[item]:
-                function_name = changes[item][PLUGIN_KEY]
-                if function_name not in update_ansible_plugins:
-                    error(f"function '{function_name}' is unknown")
-                    exit(1)
-
-                try:
-                    fn = update_ansible_plugins[function_name]
-                    value = fn(dn, yaml_struct, changes[item], item)
-                except Exception:
-                    debug(f"failed to call function {function_name}")
-            else:
-                if item not in yaml_struct:
-                    yaml_struct[item] = {}  # TODO: allow list creation
-                process_changes(changes[item], yaml_struct[item], nb_data)
-
-
-            # if nothing was added, drop it again
-            if item in yaml_struct and yaml_struct[item] == {}:
-                del yaml_struct[item]
-        elif isinstance(changes[item], str):
-            try:
-                value = dn.get(changes[item])
-                yaml_struct[item] = value
-            except Exception:
-                debug(f"skipping {changes[item]}: failed to find netbox value")
-
-
-def process_host(
-    nb: nb2an.netbox.Netbox,
-    hostname: str,
-    yaml_file: str,
-    changes: dict = None,
-):
-    info(f"modifying {yaml_file}")
-
-    # load the original YAML
-    with open(yaml_file) as original:
-        yaml_data = original.read()
-
-        yaml_parser = ruamel.yaml.YAML()
-        yaml_parser.indent(mapping=2, sequence=4, offset=2)
-        yaml_parser.preserve_quotes = True
-        yaml_parser.width = 4096
-        yaml_struct = yaml_parser.load(yaml_data)
-
-    if changes:
-        nb_data = nb.get_devices_by_name(hostname, link_other_information=True)
-        if not nb_data or len(nb_data) != 1:
-            info(f"not processing changes for {hostname} as no netbox data found")
-        else:
-            nb_data = nb_data[0]
-            process_changes(changes, yaml_struct, nb_data)
-
-        for item in changes:
-            debug(f"setting: {item} to {changes[item]}")
-
-    # write the YAML back out
-    with open(yaml_file, "w") as modified:
-        yaml_parser.dump(yaml_struct, modified)
-
-
-def process_devices(nb, racks=[], specifications=[]):
+def process_devices(nb, racks=[], specifications=[], as_fsdb=False):
     devices = nb.get_devices(racks, link_other_information=True)
+
+    if as_fsdb:
+        import pyfsdb
+        fh = pyfsdb.Fsdb(out_file_handle=sys.stdout)
+        fh.out_column_names = ['name'] + [x for x in specifications]
 
     for device in devices:
         name = nb.fqdn(device["name"])
         dn = nb2an.dotnest.DotNest(device)
+
+        # FSDB output
+        if as_fsdb:
+            row = [name]
+            for specification in specifications:
+                try:
+                    row.append(dn.get(specification))
+                except Exception:
+                    row.append(None)
+            fh.append(row)
+            continue
+
+        # human output
         print(f"{name}")
         for specification in specifications:
             try:
@@ -139,7 +91,7 @@ def main():
     nb = nb2an.netbox.Netbox()
     config = nb.get_config()
 
-    process_devices(nb, racks=args.racks, specifications=args.data_specifications)
+    process_devices(nb, racks=args.racks, specifications=args.data_specifications, as_fsdb=args.fsdb)
 
 
 
