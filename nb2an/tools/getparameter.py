@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-"""Reports specific parameters from each device"""
+"""Reports specific parameters from each device."""
 
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, FileType
 from logging import debug, info, warning, error, critical
@@ -21,7 +21,7 @@ def parse_args():
     parser = ArgumentParser(
         formatter_class=ArgumentDefaultsHelpFormatter,
         description=__doc__,
-        epilog="Exmaple Usage: nb-parameter",
+        epilog="Exmaple Usage: nb-parameters display device.manufacturer.display",
     )
 
     parser.add_argument(
