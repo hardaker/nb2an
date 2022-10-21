@@ -22,6 +22,7 @@ setuptools.setup(
             "nb-outlets = nb2an.tools.getoutlets:main",
             "nb-networks = nb2an.tools.getnetwork:main",
             "nb-update-ansible = nb2an.tools.update_ansible:main",
+            "nb-parameters = nb2an.tools.getparemeters:main",
             #            'nb-check-ansible = nb2an.tools.checkansible:main',
         ]
     },

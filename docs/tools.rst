@@ -43,8 +43,8 @@ listed when *-b* is specified.
 
 .. _nb_device:
 
-`nb-device`:
-------------
+`nb-device`: Show all the properties of a device in YAML form
+-------------------------------------------------------------
 
 `nb-device` dumps the details of a particular device, given its *Id*
 which can be found from the first column of `nb-devices`. This
@@ -55,7 +55,7 @@ to `np-update-ansible`. The output is a YAML structured array.
 
    $ nb-device 40
    airflow: null
-   asset_tag: null
+   asset_tag: 31337
    cluster: null
    ...
    device_type:
@@ -66,8 +66,33 @@ to `np-update-ansible`. The output is a YAML structured array.
        id: 2
    ...
 
-`nb-outlets`:
--------------
+`nb-parameters`: Show certain parameters of a device list
+---------------------------------------------------------
+
+`nb-parameters` dumps a formatted list of variables for all the
+devices in the system or just a rack.
+
+::
+
+   $ nb-parameters device_type.display asset_tag
+   firewall:
+     device_type.display:    firewall-XX.YY
+     asset_tag:              31337
+   ...
+
+It can also output `FSDB <https://github.com/gawseed/pyfsdb>`__ (tab
+separated) formatted code as well:
+
+::
+
+   $ nb-parameters -f device_type.display asset_tag
+   #fsdb -F t name device_type_display asset_tag
+   firewall	firewall-XX.YY	31337
+   ...
+
+
+`nb-outlets`: Display the outlets used by rack devices
+------------------------------------------------------
 
 Displays the outlets used in the rack by devices. This is unfinished
 (works but will change)
