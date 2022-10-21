@@ -17,6 +17,7 @@ import nb2an.netbox
 import nb2an.dotnest
 from nb2an.plugins.update_ansible import update_ansible_plugins
 
+
 def parse_args():
     parser = ArgumentParser(
         formatter_class=ArgumentDefaultsHelpFormatter,
@@ -35,8 +36,9 @@ def parse_args():
         "-r", "--racks", default=[], type=int, nargs="*", help="Racks to show"
     )
 
-    parser.add_argument("-f", "--fsdb", action="store_true",
-                        help="Output data in FSDB format")
+    parser.add_argument(
+        "-f", "--fsdb", action="store_true", help="Output data in FSDB format"
+    )
 
     parser.add_argument(
         "-D",
@@ -47,21 +49,27 @@ def parse_args():
         help="Process only these NetBox device names",
     )
 
-    parser.add_argument("data_specifications", type=str, nargs="*",
-                        help="Data specifications to use in nb2an keying format")
+    parser.add_argument(
+        "data_specifications",
+        type=str,
+        nargs="*",
+        help="Data specifications to use in nb2an keying format",
+    )
 
     args = parser.parse_args()
     log_level = args.log_level.upper()
     logging.basicConfig(level=log_level, format="%(levelname)-10s:\t%(message)s")
     return args
 
+
 def process_devices(nb, racks=[], specifications=[], as_fsdb=False):
     devices = nb.get_devices(racks, link_other_information=True)
 
     if as_fsdb:
         import pyfsdb
+
         fh = pyfsdb.Fsdb(out_file_handle=sys.stdout)
-        fh.out_column_names = ['name'] + [x for x in specifications]
+        fh.out_column_names = ["name"] + [x for x in specifications]
 
     for device in devices:
         name = nb.fqdn(device["name"])
@@ -86,13 +94,15 @@ def process_devices(nb, racks=[], specifications=[], as_fsdb=False):
             except Exception:
                 print(f"  {specification:<40s}:  [DNE]")
 
+
 def main():
     args = parse_args()
     nb = nb2an.netbox.Netbox()
     config = nb.get_config()
 
-    process_devices(nb, racks=args.racks, specifications=args.data_specifications, as_fsdb=args.fsdb)
-
+    process_devices(
+        nb, racks=args.racks, specifications=args.data_specifications, as_fsdb=args.fsdb
+    )
 
 
 if __name__ == "__main__":
