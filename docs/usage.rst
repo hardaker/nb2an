@@ -47,6 +47,13 @@ If you require HTTP's basic-auth, you can also add a *user* and
    user: foo
    password: 'barily a password'
 
+If you have netbox set up with a self-signed certificate (not
+recommended!), you can turn of certificate validation with:
+
+.. code-block:: yaml
+
+   verify: false
+
 Step 2: create a YAML mapping file
 ----------------------------------
 

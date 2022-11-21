@@ -91,7 +91,9 @@ class Netbox:
         # debug(f"headers: {headers}")
 
         # get the contents
-        r = requests.get(url, headers=headers, auth=auth)
+        r = requests.get(
+            url, headers=headers, auth=auth, verify=self.config.get("verify", True)
+        )
         r.raise_for_status()
 
         # maybe cache them
