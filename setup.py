@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="nb2an",
-    version="0.9.7",
+    version="0.9.8",
     author="Wes Hardaker",
     author_email="opensource@hardakers.net",
     description="A set of python scripts to compare or update NetBox and Ansible",
