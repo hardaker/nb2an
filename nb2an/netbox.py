@@ -89,11 +89,16 @@ class Netbox:
             auth = (c["user"], c["password"])
 
         # debug(f"headers: {headers}")
+        verify = self.config.get("verify", True)
+
+        if not verify:
+            # disable the warning screen if the user doesn't want validation
+            import urllib3
+
+            urllib3.disable_warnings()
 
         # get the contents
-        r = requests.get(
-            url, headers=headers, auth=auth, verify=self.config.get("verify", True)
-        )
+        r = requests.get(url, headers=headers, auth=auth, verify=verify)
         r.raise_for_status()
 
         # maybe cache them
