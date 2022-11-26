@@ -11,6 +11,7 @@ import re
 import yaml
 import shutil
 import subprocess
+import traceback
 import ruamel.yaml
 
 import nb2an.netbox
@@ -91,13 +92,15 @@ def process_changes(changes, yaml_struct, nb_data):
                 try:
                     fn = update_ansible_plugins[function_name]
                     value = fn(dn, yaml_struct, changes[item], item)
-                except Exception:
-                    debug(f"failed to call function {function_name}")
+                except Exception as exp:
+                    error(f"failed to call function {function_name}")
+                    errors = traceback.format_exception(exp)
+                    for err in errors:
+                        debug(err)
             else:
                 if item not in yaml_struct:
                     yaml_struct[item] = {}  # TODO: allow list creation
                 process_changes(changes[item], yaml_struct[item], nb_data)
-
 
             # if nothing was added, drop it again
             if item in yaml_struct and yaml_struct[item] == {}:
