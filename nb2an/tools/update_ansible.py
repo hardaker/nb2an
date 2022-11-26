@@ -93,7 +93,7 @@ def process_changes(changes, yaml_struct, nb_data):
                     fn = update_ansible_plugins[function_name]
                     value = fn(dn, yaml_struct, changes[item], item)
                 except Exception as exp:
-                    error(f"failed to call function {function_name}")
+                    error(f"failed to call function {function_name} for item {item}")
                     errors = traceback.format_exception(exp)
                     for err in errors:
                         debug(err)
