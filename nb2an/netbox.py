@@ -281,12 +281,12 @@ class Netbox:
         return dict(interface_addresses)
 
     def get_interfaces(self) -> list:
-        r = self.get(f"/dcim/interfaces/")
+        r = self.get(f"/dcim/interfaces/?limit=100000000")
 
         interfaces = collections.defaultdict(dict)
         for interface in r:
             device = interface["device"]["name"]
-            interfaces[device][interface["display"]] = interface
+            interfaces.setdefault(device,[]).append(interface)
 
         return interfaces
 
