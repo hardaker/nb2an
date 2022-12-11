@@ -20,13 +20,13 @@ class DotNest():
         ptr = self.data
 
         for n, k in enumerate(keys):
-            if isinstance(ptr, dict) and k not in ptr:
-                raise ValueError(f"key #{n} '{k}' not found in data")
             if isinstance(ptr, list):
                 if isinstance(k, str):
                     k = int(k)
                 if len(ptr) <= k:
                     raise ValueError(f"list key #{n} int({k}) too large")
+            if isinstance(ptr, dict) and k not in ptr:
+                raise ValueError(f"key #{n} '{k}' not found in data")
             ptr = ptr[k]
 
         return ptr
