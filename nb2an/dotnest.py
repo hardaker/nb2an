@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-class DotNest():
+
+class DotNest:
     def __init__(self, data):
         self._data = data
 
@@ -15,7 +16,7 @@ class DotNest():
     def get(self, keys):
         """given a list of keys, return the value at spot
 
-           keys must be a list/tuple of dict keys or ints for list elements"""
+        keys must be a list/tuple of dict keys or ints for list elements"""
         keys = self.parse_keys(keys)
         ptr = self.data
 
@@ -27,6 +28,8 @@ class DotNest():
                     raise ValueError(f"list key #{n} int({k}) too large")
             if isinstance(ptr, dict) and k not in ptr:
                 raise ValueError(f"key #{n} '{k}' not found in data")
+            if ptr is None:
+                return None
             ptr = ptr[k]
 
         return ptr
@@ -48,15 +51,15 @@ class DotNest():
         return self.deep_compare(self.data, other.data)
 
     # from https://stackoverflow.com/questions/25044073/comparing-python-objects-from-deepcopy
-    def deep_compare(self, left, right, excluded_keys = []):
+    def deep_compare(self, left, right, excluded_keys=[]):
         # convert left and right to dicts if possible, skip if they can't be converted
-        try: 
+        try:
             left = left.__dict__
             right = right.__dict__
         except:
             pass
 
-        # both sides must be of the same type 
+        # both sides must be of the same type
         if type(left) != type(right):
             return False
 
@@ -77,7 +80,7 @@ class DotNest():
             for key in right:
                 if key not in left and key not in excluded_keys:
                     return False
-            
+
             return True
 
         # check for each item in lists
